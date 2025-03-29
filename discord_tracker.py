@@ -56,18 +56,23 @@ def get_candidate_names(page_url, container_sel, name_sel):
         print(f"[!] Error scraping {page_url}: {e}")
         return set()
 
-def send_discord_ping(new_names, party):
+def send_discord_ping(new_names, party, update_type="new"):
     if not DISCORD_WEBHOOK_URL:
         print("[!] No Discord webhook URL set.")
         return
-    message = f"🗳️ **New {party} Candidate(s) Detected:**\n" + "\n".join(f"- {name}" for name in sorted(new_names))
+
+    if update_type == "new":
+        message = f"🗳️ **New {party} Candidate(s) Detected:**\n" + "\n".join(f"- {name}" for name in sorted(new_names))
+    else:
+        message = f"✅ No new {party} candidates found."
+
     payload = {"content": message}
     try:
         r = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=10)
         if r.status_code not in (200, 204):
             print(f"[!] Discord webhook failed: {r.status_code} {r.text}")
         else:
-            print(f"📣 Sent update to Discord ({len(new_names)} candidate(s))")
+            print(f"📣 Sent update to Discord ({update_type})")
     except Exception as e:
         print(f"[!] Failed to send Discord message: {e}")
 
@@ -95,9 +100,10 @@ def check_party(party, config):
         print(f"\n🔔 New {party} candidate(s) detected:")
         for name in sorted(new_names):
             print(f" - {name} ({party})")
-        send_discord_ping(new_names, party)
+        send_discord_ping(new_names, party, update_type="new")
     else:
         print(f"✅ No new {party} candidates.")
+        send_discord_ping([], party, update_type="none")
 
     with open(cache_file, "w", encoding="utf-8") as f:
         json.dump(sorted(current_names), f, ensure_ascii=False, indent=2)
