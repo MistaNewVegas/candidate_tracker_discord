@@ -2,37 +2,40 @@ name: Candidate Monitor
 
 on:
   schedule:
-    - cron: '0 12,22 * * *'  # Twice daily: 12pm and 10pm UTC
-  workflow_dispatch:         # Manual trigger
+    - cron: "0 9,21 * * *"  # Twice daily at 9 AM and 9 PM UTC
+  workflow_dispatch:       # Allow manual trigger
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Restore cache
-        uses: actions/cache@v3
-        with:
-          path: data/candidate_cache
-          key: candidate-cache
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Restore candidate cache
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: discord_bot/candidate_cache
+          key: candidate-cache-${{ github.run_id }}
+          restore-keys: |
+            candidate-cache-
+
       - name: Run candidate monitor
         run: python discord_tracker.py
 
-      - name: Save updated cache
-        uses: actions/cache@v3
+      - name: Save updated candidate cache
+        uses: actions/cache/save@v3
+        if: always()
         with:
-          path: data/candidate_cache
+          path: discord_bot/candidate_cache
           key: candidate-cache-${{ github.run_id }}
-          restore-keys: |
-            candidate-cache
