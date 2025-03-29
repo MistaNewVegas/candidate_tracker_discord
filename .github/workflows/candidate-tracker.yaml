@@ -2,7 +2,7 @@ name: Candidate Monitor
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  #
+    - cron: "0 14,20,2 * * *"  # 9am, 3pm, 9pm EST -> 14:00, 20:00, 02:00 UTC
 
   workflow_dispatch:       # Allow manual trigger
 
